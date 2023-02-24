@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  # バックエンドサーバ(express)
+  backend:
+    #
+    # コンテナ名
+    container_name: backend
+    # build
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    # コンテナの中に入る
+    tty: true
+    # ボリューム
+    volumes:
+      - ".:/backend"
+    # WORKDIR
+    working_dir: /backend
+    # 環境変数
+    environment:
+      TZ: Asia/Tokyo
+      NODE_MODE: develop
+    # ポート開放
+    ports:
+      - 3000:3000
+  
