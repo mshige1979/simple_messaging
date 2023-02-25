@@ -22,7 +22,7 @@ WORKDIR /backend
 COPY . /backend
 
 # 起動スクリプトコピー
-COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker-entrypoint_prod.sh /docker-entrypoint.sh
 
 # ポート
 EXPOSE 3001
