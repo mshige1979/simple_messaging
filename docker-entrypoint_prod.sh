@@ -8,4 +8,4 @@ npm install
 
 #express起動
 echo "npm start. "
-npm run dev
+npm run start
