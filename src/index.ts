@@ -110,6 +110,6 @@ app.get('/', (req: express.Request, res: express.Response) => {
     res.send("Hello, world")
 })
 
-server.listen(3000, () => {
-    console.log("Start on port 3000.")
+server.listen(3001, () => {
+    console.log("Start on port 3001.")
 })

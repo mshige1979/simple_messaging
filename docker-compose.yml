@@ -23,5 +23,5 @@ services:
       NODE_MODE: develop
     # ポート開放
     ports:
-      - 3000:3000
+      - 3001:3001
   
