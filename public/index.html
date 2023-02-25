@@ -108,7 +108,7 @@
   <script>
     $(() => {
       // サーバーへ接続
-      const socket = io("http://localhost:3000");
+      const socket = io(location.origin);
       socket.on("connect", () => {
         console.log(socket.connected);
       });
