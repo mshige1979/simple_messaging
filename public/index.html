@@ -26,12 +26,16 @@
       max-height: 100%;
       flex-grow: 1;
       overflow-y: auto;
-      background-color: #EDEDED;
+      background-color: #DDDDDD;
     }
 
     .content .message-block {
-      width: 640px;
+      /*width: 640px;*/
       margin: 0 auto;
+    }
+
+    .content .block {
+      background-color: #fff2ce;
     }
 
     .content .message-block .item .message {
@@ -67,7 +71,7 @@
       </div>
     </div>
     <div class="content">
-      <div class="container">
+      <div class="container block">
         <div class="message-block">
           <div class="item">
             <div class="message">aaaaaa</div>
@@ -107,6 +111,21 @@
   <script src="/jquery/jquery.min.js"></script>
   <script>
     $(() => {
+      const params = new URLSearchParams(location.search);
+      console.log(`params: `, params);
+      let roomId = ""
+      for(let param of params){
+          if (param[0] === "id") {
+            roomId = String(param[1]).trim();
+            break;
+          }
+      }
+
+      // 空の場合はroomに入れない
+      if (roomId === "") {
+        console.log("RoomIdが作成できません。");
+      }
+
       // サーバーへ接続
       const socket = io(location.origin);
       socket.on("connect", () => {
@@ -115,6 +134,13 @@
 
       // 初期化
       $(".message-block").empty();
+      setTimeout(() => {
+        // Join
+        socket.emit('join', {
+          room_id: roomId,
+          name: "テスト san"
+        });
+      }, 1000);
 
       // 受信処理
       socket.on("receiveMessage", (result) => {
@@ -144,7 +170,9 @@
         }
 
         // 'sendMessage' イベントを発火、メッセージを送信
-        socket.emit('message', inputMessage);
+        socket.emit('message', {
+          msg: inputMessage
+        });
         // input 内のテキストを空にする
         clearText();
       });

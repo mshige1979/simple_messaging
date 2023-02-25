@@ -46,21 +46,54 @@ app.use(session({
     saveUninitialized: true,
 }));
 
+//ユーザー情報
+type UserInfo = {
+    //  ルームID
+    room_id: string;
+    // 名前
+    name?: string;
+}
+
+type SendMessage = {
+    msg: string;
+}
+
+// ユーザー一覧
+const userList: { [key: string]: UserInfo } = {}
+
 // コネクション確立
 io.on("connection", (socket) => {
     console.log(socket.id);
 
+    // Roomへ入る
+    socket.on("join", (msg: UserInfo) => {
+        console.log(`[${socket.id}] join client: `, msg);
+
+        // ユーザー登録
+        userList[socket.id] = msg;
+
+        // 入室
+        socket.join(msg.room_id);
+    });
+
     // イベント受信
-    socket.on("message", (message) => {
-        console.log(`from client: ${message}`);
+    socket.on("message", (msg: SendMessage) => {
+        console.log(`[${socket.id}] send client: }`, msg);
 
         // 受診したメッセージを返送
-        io.emit('receiveMessage', message);
+        io.to(userList[socket.id].room_id).emit('receiveMessage', msg.msg);
     });
 
     // 切断
     socket.on("disconnect", (reason) => {
         console.log(`user disconnected. reason is ${reason}.`);
+
+        // 退出する
+        if (userList[socket.id] !== undefined) {
+            socket.leave(userList[socket.id].room_id);
+            delete userList[socket.id];
+        }
+
     });
 });
 
