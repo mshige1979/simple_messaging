@@ -1,3 +1,155 @@
-<html>
-    aaaaaaaaaa
+<!DOCTYPE html>
+<html> 
+<head>
+  <meta charset="utf8" />
+  <title>simple-messaging</title>
+  <link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
+  <style>
+    html, body {
+      height: 100%;
+    }
+    #wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .header {
+      position: relative;
+      display: flex;
+      height: 80px;
+      min-width: 80px;
+      background-color: #FFF;
+    }
+    .content {
+      display: flex;
+      height: 100%;
+      max-height: 100%;
+      flex-grow: 1;
+      overflow-y: auto;
+      background-color: #EDEDED;
+    }
+
+    .content .message-block {
+      width: 640px;
+      margin: 0 auto;
+    }
+
+    .content .message-block .item .message {
+      width: 100%;
+      background-color: #afd9e1;
+      padding: 5px 10px;
+      border: 2px solid #4d3f91;
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+    .content .message-block .item .time {
+      font-size: small;
+      color: #9C9C9C;
+    }
+
+    .footer {
+      display: flex;
+      height: 100px;
+      min-width: 10px;
+      background-color: #FFF;
+    }
+    .footer .send-block {
+      width: 100%;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <div class="header">
+      <div class="container">
+        <h1>コメントページ</h1>
+      </div>
+    </div>
+    <div class="content">
+      <div class="container">
+        <div class="message-block">
+          <div class="item">
+            <div class="message">aaaaaa</div>
+            <div>
+              <span class="time">11:20</span>
+            </div>
+          </div>
+          <div class="item">
+            <div class="message">aaaaaa</div>
+            <div>
+              <span>11:20</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="container">
+        <div class="send-block">
+          <form class="row g-3">
+            <div class="col">
+              <input class="form-control" id="inputText" type="text"
+                placeholder="コメントを入力">
+            </div>
+            <div class="col-auto">
+              <a href="javascript:void(0);" class="btn btn-primary" id="sendButton">
+                送信
+              </a>
+            </div>
+          </form>
+        </div>  
+      </div>
+    </div>
+  </div>
+  <!-- ライブラリの読み込み -->
+  <script src="/socket.io/socket.io.min.js"></script>
+  <script src="/jquery/jquery.min.js"></script>
+  <script>
+    $(() => {
+      // サーバーへ接続
+      const socket = io(location.origin);
+      socket.on("connect", () => {
+        console.log(socket.connected);
+      });
+
+      // 初期化
+      $(".message-block").empty();
+
+      // 受信処理
+      socket.on("receiveMessage", (result) => {
+        console.log(result);
+
+        const _html = `
+        <div class="item">
+          <div class="message">${result}</div>
+          <div>
+            <span class="time">${(new Date().toString())}</span>
+          </div>
+        </div>
+        `
+        const _item = $(_html);
+        $(".message-block").append(_item);
+      });
+      const clearText = () => {
+        $("#inputText").val("");
+      }
+
+      // 送信ボタン押下時
+      $("#sendButton").on("click", () => {
+        // inputに入力されたテキストを取得
+        let inputMessage = $("#inputText").val();
+        if (inputMessage === '') {
+          return;
+        }
+
+        // 'sendMessage' イベントを発火、メッセージを送信
+        socket.emit('message', inputMessage);
+        // input 内のテキストを空にする
+        clearText();
+      });
+
+    });
+  </script>
+</body>
 </html>
