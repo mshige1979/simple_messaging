@@ -2,6 +2,7 @@ import express from 'express'
 import http from 'http'
 import session from 'express-session';
 import sockerio from "socket.io";
+import * as redis from 'redis';
 
 const app: express.Express = express();
 const server = http.createServer(app);
@@ -46,20 +47,38 @@ app.use(session({
     saveUninitialized: true,
 }));
 
+// redis接続
+const redisClient = redis.createClient({
+    url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+});
+redisClient.on('error', (err) => {
+    console.log('Redis Client Error', err)
+});
+redisClient.connect();
+
+setTimeout(async () => {
+    // ユーザー情報をクリア
+    await redisClient.del("userList");
+    // メッセージはそのまま
+    const _messageList = await redisClient.lRange("messageList", 0, -1);
+    console.log(`messageList: `, _messageList);
+}, 1000);
+
 //ユーザー情報
 type UserInfo = {
+    // socketID
+    socket_id: string;
     //  ルームID
     room_id: string;
     // 名前
     name?: string;
+    // 新規ルーム作成
+    new?: boolean;
 }
 
 type SendMessage = {
     msg: string;
 }
-
-// ユーザー一覧
-const userList: { [key: string]: UserInfo } = {}
 
 // コネクション確立
 io.on("connection", (socket) => {
@@ -69,30 +88,80 @@ io.on("connection", (socket) => {
     socket.on("join", (msg: UserInfo) => {
         console.log(`[${socket.id}] join client: `, msg);
 
+        // ルーム作成時のみデータを初期化
+        if (msg.new === true) {
+            redisClient.del("userList");
+            redisClient.del("messageList");
+        }
+
         // ユーザー登録
-        userList[socket.id] = msg;
+        redisClient.lPush("userList", JSON.stringify({
+            socket_id: socket.id,
+            room_id: msg.room_id,
+        }));
 
         // 入室
         socket.join(msg.room_id);
     });
 
     // イベント受信
-    socket.on("message", (msg: SendMessage) => {
+    socket.on("message", async (msg: SendMessage) => {
         console.log(`[${socket.id}] send client: }`, msg);
+        const _date = (new Date()).toString();
+
+        // ユーザー一覧をすべて取得
+        const _userList = await redisClient.lRange("userList", 0, -1);
+        const filterUsers = _userList.filter((item) => {
+            const _item: UserInfo = JSON.parse(item);
+            return _item.socket_id === socket.id
+        });
+        if (filterUsers.length <= 0) {
+            console.log(`unknown user: ${socket.id}`);
+            return;
+        }
+        const _user: UserInfo = JSON.parse(filterUsers[0]);
+
+        // データを保存する
+        redisClient.lPush("messageList", JSON.stringify({
+            msg: msg.msg,
+            date: _date,
+            room_id: _user.room_id
+        }));
 
         // 受診したメッセージを返送
-        io.to(userList[socket.id].room_id).emit('receiveMessage', msg.msg);
+        io.to(_user.room_id).emit('receiveMessage', {
+            msg: msg.msg,
+            date: _date,
+        });
     });
 
     // 切断
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", async (reason) => {
         console.log(`user disconnected. reason is ${reason}.`);
 
+        // ユーザー一覧をすべて取得
+        const _userList = await redisClient.lRange("userList", 0, -1);
+
+        // ユーザー一覧より対象のユーザーを除外する
+        const filterUsers = _userList.filter((item) => {
+            const _item: UserInfo = JSON.parse(item);
+            return _item.socket_id !== socket.id
+        });
+        console.log(`userList2: `, filterUsers);
+
+        // 削除して再作成
+        await redisClient.del("userList");
+        filterUsers.map((item) => {
+            redisClient.lPush("userList", item);
+        });
+
         // 退出する
-        if (userList[socket.id] !== undefined) {
-            socket.leave(userList[socket.id].room_id);
-            delete userList[socket.id];
-        }
+        _userList.map((item) => {
+            const _item: UserInfo = JSON.parse(item);
+            if (_item.socket_id === socket.id) {
+                socket.leave(_item.room_id);
+            }
+        });
 
     });
 });
@@ -108,6 +177,27 @@ declare module 'express-session' {
 app.get('/', (req: express.Request, res: express.Response) => {
     console.log(`session:`, req.session)
     res.send("Hello, world")
+})
+
+// 既存メッセージを返却
+app.get('/messages', async (req: express.Request, res: express.Response) => {
+
+    console.log(`params: `, req.query);
+    const _id = req.query.id;
+
+    // メッセージ取得
+    const _messageList = await redisClient.lRange("messageList", 0, -1);
+    const _messages = _messageList.filter((item) => {
+        const _item = JSON.parse(item);
+        return _item.room_id === _id;
+    }).map((item) => {
+        return JSON.parse(item);
+    })
+    res.json(
+        {
+            messages: _messages
+        }
+    );
 })
 
 server.listen(3001, () => {

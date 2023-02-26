@@ -21,6 +21,9 @@ WORKDIR /backend
 # ファイルコピー
 COPY . /backend
 
+# npm install
+RUN npm install
+
 # 起動スクリプトコピー
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 

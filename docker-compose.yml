@@ -12,6 +12,9 @@ services:
       dockerfile: ./Dockerfile
     # コンテナの中に入る
     tty: true
+    # 他のコンテナ起動後に起動するように制御
+    depends_on:
+      - redis
     # ボリューム
     volumes:
       - ".:/backend"
@@ -21,7 +24,24 @@ services:
     environment:
       TZ: Asia/Tokyo
       NODE_MODE: develop
+      REDIS_HOST: redis 
+      REDIS_PASSWORD: ""
+      REDIS_PORT: 6379
     # ポート開放
     ports:
       - 3001:3001
   
+  # redis
+  redis:
+    # image
+    image: "redis:latest"
+    # port
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+  
+  # 名前付きボリュームをdockerホストの管理下で作成
+volumes:
+  #
+  redis_data: {}
