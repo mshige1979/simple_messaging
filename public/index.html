@@ -32,10 +32,11 @@
     .content .message-block {
       /*width: 640px;*/
       margin: 0 auto;
+      background-color: #fff2ce;
+      padding: 10px;
     }
 
     .content .block {
-      background-color: #fff2ce;
     }
 
     .content .message-block .item .message {
@@ -91,10 +92,11 @@
     <div class="footer">
       <div class="container">
         <div class="send-block">
-          <form class="row g-3">
+          <form class="row g-3" onsubmit="return false;">
             <div class="col">
               <input class="form-control" id="inputText" type="text"
-                placeholder="コメントを入力">
+                placeholder="コメントを入力"
+                maxlength="20">
             </div>
             <div class="col-auto">
               <a href="javascript:void(0);" class="btn btn-primary" id="sendButton">
@@ -130,17 +132,43 @@
       const socket = io(location.origin);
       socket.on("connect", () => {
         console.log(socket.connected);
+
+        setTimeout(() => {
+          // Join
+          socket.emit('join', {
+            room_id: roomId,
+            name: "テスト san"
+          });
+
+          // メッセージ再取得
+          $.getJSON(`/messages?id=${roomId}`, (result) => {
+            console.log(`result: `, result);
+
+            $(".message-block").empty();
+            result.messages.reverse().map((item) => {
+              const _html = `
+              <div class="item">
+                <div class="message">${item.msg}</div>
+                <div>
+                  <span class="time">${item.date}</span>
+                </div>
+              </div>
+              `;
+              const _item = $(_html);
+              $(".message-block").append(_item);
+            });
+          });
+
+        }, 1000);
+
+
+      });
+      socket.on("disconnect", () => {
+        console.log(`disconnected`);
       });
 
       // 初期化
       $(".message-block").empty();
-      setTimeout(() => {
-        // Join
-        socket.emit('join', {
-          room_id: roomId,
-          name: "テスト san"
-        });
-      }, 1000);
 
       // 受信処理
       socket.on("receiveMessage", (result) => {
@@ -148,9 +176,9 @@
 
         const _html = `
         <div class="item">
-          <div class="message">${result}</div>
+          <div class="message">${result.msg}</div>
           <div>
-            <span class="time">${(new Date().toString())}</span>
+            <span class="time">${result.date}</span>
           </div>
         </div>
         `
