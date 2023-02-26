@@ -158,6 +158,11 @@
               const _item = $(_html);
               $(".message-block").append(_item);
             });
+
+            // 一番下までスクロール
+            setTimeout(() => {
+              $('.content').scrollTop($('.content')[0].scrollHeight);
+            }, 300);
           });
 
         }, 1000);
@@ -185,13 +190,17 @@
         `
         const _item = $(_html);
         $(".message-block").append(_item);
+
+        // 一番下までスクロール
+        setTimeout(() => {
+          $('.content').scrollTop($('.content')[0].scrollHeight);
+        }, 300);
       });
       const clearText = () => {
         $("#inputText").val("");
       }
 
-      // 送信ボタン押下時
-      $("#sendButton").on("click", () => {
+      const commentSend = () => {
         // inputに入力されたテキストを取得
         let inputMessage = $("#inputText").val();
         if (inputMessage === '') {
@@ -204,6 +213,19 @@
         });
         // input 内のテキストを空にする
         clearText();
+
+      }
+
+      // エンター押下時
+      $("#inputText").on("keydown", (event) => {
+        if (event.key === "Enter") {
+          console.log("Enter");
+          commentSend();
+        }
+      });
+      // 送信ボタン押下時
+      $("#sendButton").on("click", () => {
+        commentSend();
       });
 
     });
