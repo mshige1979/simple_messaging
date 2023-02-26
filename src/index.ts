@@ -88,11 +88,11 @@ io.on("connection", (socket) => {
     socket.on("join", (msg: UserInfo) => {
         console.log(`[${socket.id}] join client: `, msg);
 
-        // ルーム作成時のみデータを初期化
-        if (msg.new === true) {
-            redisClient.del("userList");
-            redisClient.del("messageList");
-        }
+        // // ルーム作成時のみデータを初期化
+        //if (msg.new === true) {
+        //    redisClient.del("userList");
+        //    redisClient.del("messageList");
+        //}
 
         // ユーザー登録
         redisClient.lPush("userList", JSON.stringify({
