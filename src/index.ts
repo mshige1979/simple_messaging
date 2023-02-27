@@ -6,7 +6,13 @@ import * as redis from 'redis';
 
 const app: express.Express = express();
 const server = http.createServer(app);
-const io = new sockerio.Server(server);
+const io = new sockerio.Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true,    
+    },
+  });
 
 // 環境変数出力
 console.log(`env: `, process.env);

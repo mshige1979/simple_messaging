@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf8" />
   <title>simple-messaging</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/bootstrap/bootstrap.min.css">
   <style>
     html, body {
@@ -75,18 +76,6 @@
     <div class="content">
       <div class="container block">
         <div class="message-block">
-          <div class="item">
-            <div class="message">aaaaaa</div>
-            <div>
-              <span class="time">11:20</span>
-            </div>
-          </div>
-          <div class="item">
-            <div class="message">aaaaaa</div>
-            <div>
-              <span>11:20</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -130,7 +119,9 @@
       }
 
       // サーバーへ接続
-      const socket = io(location.origin);
+      const socket = io(location.origin, {
+        withCredentials: true
+      });
       socket.on("connect", () => {
         console.log(socket.connected);
 
@@ -148,7 +139,7 @@
             $(".message-block").empty();
             result.messages.reverse().map((item) => {
               const _html = `
-              <div class="item">
+              <div class="col col-12 item">
                 <div class="message">${item.msg}</div>
                 <div>
                   <span class="time">${item.date}</span>
